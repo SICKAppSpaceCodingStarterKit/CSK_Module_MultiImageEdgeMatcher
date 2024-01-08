@@ -31,13 +31,6 @@ function multiImageEdgeMatcher.create(multiImageEdgeMatcherInstanceNo)
   self.multiImageEdgeMatcherInstanceNoString = tostring(self.multiImageEdgeMatcherInstanceNo) -- Number of this instance as string
   self.helperFuncs = require('ImageProcessing/MultiImageEdgeMatcher/helper/funcs') -- Load helper functions
 
-  -- Optionally check if specific API was loaded via
-  --[[
-  if _G.availableAPIs.specific then
-  -- ... doSomething ...
-  end
-  ]]
-
   -- Create parameters etc. for this module instance
   self.activeInUI = false -- Check if this instance is currently active in UI
 
@@ -52,61 +45,43 @@ function multiImageEdgeMatcher.create(multiImageEdgeMatcherInstanceNo)
   self.parametersName = 'CSK_MultiImageEdgeMatcher_Parameter' .. self.multiImageEdgeMatcherInstanceNoString -- name of parameter dataset to be used for this module
   self.parameterLoadOnReboot = false -- Status if parameter dataset should be loaded on app/device reboot
 
-  --self.object = Image.create() -- Use any AppEngine CROWN
-  --self.counter = 1 -- Short docu of variable
-  --self.varA = 'value' -- Short docu of variable
-
   -- Parameters to be saved permanently if wanted
   self.parameters = {}
-  self.parameters.registeredEvent = '' -- If thread internal function should react on external event, define it here, e.g. 'CSK_OtherModule.OnNewInput'
-  self.parameters.processingFile = 'CSK_MultiImageEdgeMatcher_Processing' -- which file to use for processing (will be started in own thread)
-  --self.parameters.showImage = true -- Short docu of variable
-  --self.parameters.paramA = 'paramA' -- Short docu of variable
-  --self.parameters.paramB = 123 -- Short docu of variable
+  self.parameters.registeredEvent = '' -- Event to register for new images to process, like 'CSK_ImagePlayer.OnNewImage'
+  self.parameters.processingFile = 'CSK_MultiImageEdgeMatcher_Processing' -- Which file to use for processing (will be started in own thread)
 
-  self.parameters.internalObject = {} -- optionally
-  --self.parameters.selectedObject = 1 -- Which object is currently selected
-  --[[
-    for i = 1, 10 do
-    local obj = {}
+  self.parameters.showImage = true -- Show image in UI viewer
 
-    obj.objectName = 'Object' .. tostring(i) -- name of the object
-    obj.active = false  -- is this object active
-    -- ...
+  self.parameters.matcher = Image.Matching.EdgeMatcher.create() -- EdgeMatcher handle
+  self.parameters.edgeThreshold = 30 -- EdgeMatcher edge threshold
+  self.parameters.minScore = 0.8 -- Minimum score to count as a found object
+  self.parameters.downsampleFactor = 2 -- EdgeMatcher downsample factor. ReTeach EdgeMatcher if setting this value.
+  self.parameters.maxMatches = 1 -- Maximum amount of matches to accept
+  self.parameters.showImage = true -- Show image in UI
 
-    table.insert(self.parameters.internalObject, obj)
-  end
-
-  local internalObjectContainer = self.helperFuncs.convertTable2Container(self.parameters.internalObject)
-  ]]
+  self.parameters.resultTransX = 320 -- Pixel to translate the found result position in x
+  self.parameters.resultTransY = 240 -- Pixel to translate the found result position in y
 
   -- Parameters to give to the processing script
   self.multiImageEdgeMatcherProcessingParams = Container.create()
   self.multiImageEdgeMatcherProcessingParams:add('multiImageEdgeMatcherInstanceNumber', multiImageEdgeMatcherInstanceNo, "INT")
   self.multiImageEdgeMatcherProcessingParams:add('registeredEvent', self.parameters.registeredEvent, "STRING")
-  --self.multiImageEdgeMatcherProcessingParams:add('showImage', self.parameters.showImage, "BOOL")
-  --self.multiImageEdgeMatcherProcessingParams:add('viewerId', 'multiImageEdgeMatcherViewer' .. self.multiImageEdgeMatcherInstanceNoString, "STRING")
+  self.multiImageEdgeMatcherProcessingParams:add('showImage', self.parameters.showImage, "BOOL")
+  self.multiImageEdgeMatcherProcessingParams:add('viewerId', 'multiImageEdgeMatcherViewer' .. self.multiImageEdgeMatcherInstanceNoString, "STRING")
 
-  --self.multiImageEdgeMatcherProcessingParams:add('internalObjects', internalObjectContainer, "OBJECT") -- optionally
-  --self.multiImageEdgeMatcherProcessingParams:add('selectedObject', self.parameters.selectedObject, "INT")
+  self.multiImageEdgeMatcherProcessingParams:add('edgeThreshold', self.parameters.edgeThreshold, "INT")
+  self.multiImageEdgeMatcherProcessingParams:add('minScore', self.parameters.minScore, "FLOAT")
+  self.multiImageEdgeMatcherProcessingParams:add('downsampleFactor', self.parameters.downsampleFactor, "INT")
+  self.multiImageEdgeMatcherProcessingParams:add('maxMatches', self.parameters.maxMatches, "INT")
+
+  self.multiImageEdgeMatcherProcessingParams:add('resultTransX', self.parameters.resultTransX, "INT")
+  self.multiImageEdgeMatcherProcessingParams:add('resultTransY', self.parameters.resultTransY, "INT")
 
   -- Handle processing
   Script.startScript(self.parameters.processingFile, self.multiImageEdgeMatcherProcessingParams)
 
   return self
 end
-
---[[
---- Some internal code docu for local used function to do something
-function multiImageEdgeMatcher:doSomething()
-  self.object:doSomething()
-end
-
---- Some internal code docu for local used function to do something else
-function multiImageEdgeMatcher:doSomethingElse()
-  self:doSomething() --> access internal function
-end
-]]
 
 return multiImageEdgeMatcher
 
